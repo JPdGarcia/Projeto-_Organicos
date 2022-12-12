@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Body
-from fastapi.encoders import jsonable_encoder as json
+from uuid import UUID
 
 from database import mongo
-from models import Produto, ProdutoUpdate
+from models import Produto, ProdutoPatchReq, ProdutoResponse
 
 
 router = APIRouter(prefix="/produtos", tags=["Produtos"])
@@ -14,8 +14,11 @@ def listar_produtos():
 
 
 @router.get("/{doc_id}", status_code=200, response_model=Produto)
-def listar_um_produto(doc_id: str):
-    return mongo.coll.find_one({"_id": doc_id})
+def listar_um_produto(doc_id: UUID):
+    if doc := mongo.coll.find_one({"_id": doc_id}):
+        return doc
+
+    raise HTTPException(404, f"Produto com o ID {doc_id} não existe")
 
 
 @router.post("/", status_code=201, response_model=Produto)
@@ -33,22 +36,29 @@ def cadastrar_produto(produto: Produto = Body(example={"nome": "Banana",
     return inserted_doc
 
 
-@router.patch("/{doc_id}", status_code=200)
-def atualizar_produto(doc_id: str, produto: ProdutoUpdate):
-    produto = json(produto, exclude={"_id": True, "id": True}, exclude_unset=True)
+@router.patch("/{doc_id}",
+              status_code=200,
+              response_model=ProdutoResponse,
+              response_model_exclude_unset=True)
+def atualizar_produto(doc_id: UUID, produto: ProdutoPatchReq):
+    produto = produto.dict(exclude={"_id": True, "id": True}, exclude_unset=True)
 
     if doc_before := mongo.coll.find_one_and_update({"_id": doc_id}, {"$set": produto}):
         doc_after = mongo.coll.find_one({"_id": doc_id})
-        return {"antes": doc_before, "depois": doc_after}
+        return ProdutoResponse(antes=doc_before, depois=doc_after)
     
-    return HTTPException(404, f"Produto com o ID {doc_id} não existe")
+    raise HTTPException(404, f"Produto com o ID {doc_id} não existe")
 
 
-@router.delete("/{doc_id}", status_code=200)
-def deletar_produto(doc_id: str):
-    deleted_doc = mongo.coll.find_one_and_delete({"_id": doc_id})
+@router.delete("/{doc_id}",
+               status_code=200,
+               response_model=ProdutoResponse,
+               response_model_exclude_unset=True)
+def deletar_produto(doc_id: UUID):
+    if deleted_doc := mongo.coll.find_one_and_delete({"_id": doc_id}):
+        return ProdutoResponse(deletado=deleted_doc)
+    
+    raise HTTPException(404, f"Produto com o ID {doc_id} não foi deletado, pois não existe")
 
-    return {"documento deletado": deleted_doc}
 
-# TODO: handle errors properly
 # TODO: figure out how to forbid _id setting during requests to /cadastrar

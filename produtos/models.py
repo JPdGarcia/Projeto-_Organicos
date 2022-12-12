@@ -19,7 +19,7 @@ class Produto(BaseModel):
         extra = "allow"
         allow_population_by_field_name = True
 
-class ProdutoUpdate(BaseModel):
+class ProdutoPatchReq(BaseModel):
     nome: str | None = Field(example="Maçã")
     preco: Decimal | None = Field(ge=0, decimal_places=2, example=Decimal("2.00"))
     descricao: str | None = Field(example="Um kilo de maçãs.")
@@ -29,3 +29,8 @@ class ProdutoUpdate(BaseModel):
         extra = "allow"
         fields = {"_id": {"exclude": True},
                   "id": {"exclude": True}}
+
+class ProdutoResponse(BaseModel):
+    antes: Produto | None
+    depois: Produto | None
+    deletado: Produto | None
