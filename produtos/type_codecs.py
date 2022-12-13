@@ -1,5 +1,4 @@
 from decimal import Decimal
-from bson.binary import UuidRepresentation
 from bson.codec_options import CodecOptions, TypeCodec, TypeRegistry
 from bson.decimal128 import Decimal128
 
@@ -15,5 +14,4 @@ class DecimalCodec(TypeCodec):
         return value.to_decimal().quantize(Decimal("0.00"))
 
 type_registry = TypeRegistry([DecimalCodec()])
-codec_options = CodecOptions(type_registry=type_registry,
-                             uuid_representation=UuidRepresentation.STANDARD)
+codec_options = CodecOptions(type_registry=type_registry)

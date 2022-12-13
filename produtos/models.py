@@ -1,34 +1,35 @@
 from decimal import Decimal
-from pydantic import BaseModel, Field, validator
-from uuid import UUID, uuid4
+from pydantic import BaseModel, Field, root_validator, validator
 
 
 class Produto(BaseModel):
-    id: UUID = Field(default_factory=uuid4, alias="_id",
-                     example="12345678-1234-5678-1234-567812345678")
-    nome: str = Field(..., example="Banana")
-    preco: Decimal = Field(..., ge=0, decimal_places=2, example=Decimal("4.18"))
-    descricao: str = Field(..., example="Uma dúzia de bananas.")
+    doc_id: int = Field(1, ge=1)
+    nome: str = Field(..., min_length=1, max_length=30)
+    preco: Decimal = Field(..., ge=0, decimal_places=2)
+    descricao: str = Field(..., min_length=1, max_length=200)
+
+    @root_validator(pre=True)
+    def float_to_decimal(cls, values: dict):
+        return values | {k: Decimal(v).quantize(Decimal("0.00"))
+                         for k, v in values.items()
+                         if isinstance(v, float)}
 
     @validator("preco")
-    def currency_validator(cls, v):
+    def format_currency(cls, v):
         return Decimal(v).quantize(Decimal("0.00"))
 
     class Config:
         anystr_strip_whitespace = True
         extra = "allow"
-        allow_population_by_field_name = True
 
 class ProdutoPatchReq(BaseModel):
-    nome: str | None = Field(example="Maçã")
-    preco: Decimal | None = Field(ge=0, decimal_places=2, example=Decimal("2.00"))
-    descricao: str | None = Field(example="Um kilo de maçãs.")
+    nome: str | None = Field(min_length=1, max_length=30)
+    preco: Decimal | None = Field(ge=0, decimal_places=2)
+    descricao: str | None = Field(min_length=1, max_length=200)
 
     class Config:
         anystr_strip_whitespace = True
         extra = "allow"
-        fields = {"_id": {"exclude": True},
-                  "id": {"exclude": True}}
 
 class ProdutoResponse(BaseModel):
     antes: Produto | None
