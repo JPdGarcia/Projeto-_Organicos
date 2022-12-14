@@ -131,6 +131,11 @@ def removerCarrinho():
 
     return redirect('/static/removerCarrinho.html')
 
+@app.route('/listar/carrinho')
+def listarCarrinho():
+    df = carrinho
+    df_html = df.to_html()
+    return render_template('carrinho.html', table = df_html)
 
 
 if __name__=='__main__':
