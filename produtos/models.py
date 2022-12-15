@@ -35,3 +35,5 @@ class ProdutoResponse(BaseModel):
     antes: Produto | None
     depois: Produto | None
     deletado: Produto | None
+
+## TODO: converter floats dentro de lists, dicts, etc. para Decimals

@@ -29,7 +29,7 @@ def listar_um_produto(doc_id: int):
 
 @router.post("/", status_code=201, response_model=Produto)
 def cadastrar_produto(produto: Produto = Body(examples=schema.post)):
-    produto.doc_id += mongo.coll.count_documents({})
+    produto.doc_id = mongo.coll.count_documents({}) + 1
     new_doc = produto.dict(exclude={"_id": True})
 
     insert_result = mongo.coll.insert_one(new_doc)
@@ -68,3 +68,5 @@ def deletar_produto(doc_id: int):
         return ProdutoResponse(deletado=deleted_doc)
     
     raise HTTPException(404, f"Produto com o ID {doc_id} não foi deletado, pois não existe")
+
+## TODO: expandir funcionalidade de updates
